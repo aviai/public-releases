@@ -1,4 +1,4 @@
-# lattice-cli-releases
+# public-releases
 
 Signed release artifacts for the **Lattice CLI** (`aviai/lattice-kg`'s `cli/`
 workspace member) — nothing else. This repo is deliberately separate from
