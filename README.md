@@ -37,38 +37,62 @@ signature against a public key embedded in the CLI before trusting anything in i
 this repo being public is not itself a trust boundary; the signature is. See
 `cli/README_UPDATE.md` in `aviai/lattice-kg` for the full design.
 
-### Fetching a binary manually
+### Installing a binary manually
 
 Most people should just run `Lattice update` — this is for anyone who wants a
 binary directly (e.g. no existing `Lattice` install to run `update` from).
+Each command below finds the latest `lattice-cli/*` release and downloads the
+right binary for that platform — no `gh` CLI or login required, just `curl`
+(macOS/Linux, both preinstalled) or PowerShell (Windows, preinstalled).
 
-Find the latest lattice-cli release (don't use `gh release view --repo
-aviai/public-releases` with no tag, or the web UI's "Latest" release — see
-"Tag namespacing" above for why; `gh release list`'s tag isn't its first
-column, so a plain `grep '^lattice-cli/'` on its table output won't match —
-filter on the actual `tagName` field instead):
-
-```sh
-gh release list --repo aviai/public-releases --json tagName,publishedAt \
-  --jq 'map(select(.tagName | startswith("lattice-cli/"))) | sort_by(.publishedAt) | reverse | .[0].tagName'
-```
-
-Download a binary for a specific release, once you have its tag:
+**macOS (Apple Silicon only — no Intel Mac build yet):**
 
 ```sh
-gh release download lattice-cli/cli-v0.2.0 --repo aviai/public-releases --pattern 'Lattice-darwin-arm64'
+TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o Lattice "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/Lattice-darwin-arm64" && chmod +x Lattice && ./Lattice --version
 ```
 
-Without the `gh` CLI: a namespaced tag's assets are NOT reliably reachable at
-the "obvious" URL — `.../releases/download/lattice-cli/cli-v0.2.0/<asset>`
-404s, because GitHub treats the literal `/` inside the tag as a path
-separator rather than as part of an opaque tag name (confirmed empirically;
-`update_client.py`'s own asset-fetch code has the same finding written up in
-more detail). Percent-encode the tag's `/` as `%2F` instead:
+**Linux (x86_64 only — no ARM Linux build yet):**
 
 ```sh
-curl -LO 'https://github.com/aviai/public-releases/releases/download/lattice-cli%2Fcli-v0.2.0/Lattice-darwin-arm64'
+TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o Lattice "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/Lattice-linux-x86_64" && chmod +x Lattice && ./Lattice --version
 ```
+
+**Windows (PowerShell):**
+
+```powershell
+$tag = (Invoke-RestMethod "https://api.github.com/repos/aviai/public-releases/releases" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
+Invoke-WebRequest -Uri "https://github.com/aviai/public-releases/releases/download/$($tag -replace '/', '%2F')/Lattice-windows-amd64.exe" -OutFile Lattice.exe
+.\Lattice.exe --version
+```
+
+If `./Lattice --version` (or `.\Lattice.exe --version`) prints a version
+string, it worked — move the binary wherever you keep executables on your
+`PATH` (e.g. `sudo mv Lattice /usr/local/bin/` on macOS/Linux).
+
+All three rely on the GitHub API returning releases newest-first (its
+documented default — `Lattice update` relies on the same ordering, see
+`update_client.py`'s `_resolve_manifest_urls`) and take the first one tagged
+`lattice-cli/*`, since neither the web UI's "Latest" badge nor
+`/releases/latest` can be trusted here (see "Tag namespacing" above). They
+percent-encode that tag's `/` as `%2F` before building the download URL —
+required because GitHub 404s on a literal `/` inside a release tag path
+segment (confirmed empirically; treats it as a path separator, not part of
+an opaque tag name).
+
+<details>
+<summary>Prefer the <code>gh</code> CLI?</summary>
+
+```sh
+TAG=$(gh release list --repo aviai/public-releases --json tagName,publishedAt \
+  --jq 'map(select(.tagName | startswith("lattice-cli/"))) | sort_by(.publishedAt) | reverse | .[0].tagName')
+gh release download "$TAG" --repo aviai/public-releases --pattern 'Lattice-darwin-arm64'  # or -linux-x86_64 / -windows-amd64.exe
+```
+
+`gh` handles the tag's `/` correctly on its own — no percent-encoding needed
+here. Requires `gh auth login` first, even for this public repo; `gh`
+refuses to run at all otherwise.
+
+</details>
 
 ## No source code here
 
