@@ -53,13 +53,13 @@ right binary for that platform — no `gh` CLI or login required, just `curl`
 **macOS (Apple Silicon only — no Intel Mac build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod +x mithrl && ./mithrl --version
+TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 100 mithrl && ./mithrl --version
 ```
 
 **Linux (x86_64 only — no ARM Linux build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod +x mithrl && ./mithrl --version
+TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 100 mithrl && ./mithrl --version
 ```
 
 **Windows (PowerShell):**
@@ -91,6 +91,7 @@ an opaque tag name).
 TAG=$(gh release list --repo aviai/public-releases --json tagName,publishedAt \
   --jq 'map(select(.tagName | startswith("lattice-cli/"))) | sort_by(.publishedAt) | reverse | .[0].tagName')
 gh release download "$TAG" --repo aviai/public-releases --pattern 'mithrl-darwin-arm64'  # or -linux-x86_64 / -windows-amd64.exe
+mv mithrl-darwin-arm64 mithrl && chmod 100 mithrl  # adjust the source name to match whichever pattern you used above
 ```
 
 `gh` handles the tag's `/` correctly on its own — no percent-encoding needed
