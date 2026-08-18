@@ -53,19 +53,24 @@ right binary for that platform — no `gh` CLI or login required, just `curl`
 **macOS (Apple Silicon only — no Intel Mac build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
+TAG=$(curl -s "https://api.github.com/repos/aviai/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; exit 1; }
+curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Linux (x86_64 only — no ARM Linux build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
+TAG=$(curl -s "https://api.github.com/repos/aviai/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
+[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; exit 1; }
+curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-$tag = (Invoke-RestMethod "https://api.github.com/repos/aviai/public-releases/releases" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
+$tag = (Invoke-RestMethod "https://api.github.com/repos/aviai/public-releases/releases?per_page=100" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
+if (-not $tag) { throw "No lattice-cli/* release found" }
 Invoke-WebRequest -Uri "https://github.com/aviai/public-releases/releases/download/$($tag -replace '/', '%2F')/mithrl-windows-amd64.exe" -OutFile mithrl.exe
 .\mithrl.exe --version
 ```
