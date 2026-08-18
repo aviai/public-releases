@@ -1,6 +1,6 @@
 # public-releases
 
-Signed release artifacts, published from more than one aviai product's release
+Signed release artifacts, published from more than one mithrl-labs product's release
 CI — no application source, only release assets and this README. This repo is
 deliberately public and separate from any product's own (private/internal)
 source repo, so each product's self-update/install flow can fetch its manifest
@@ -30,7 +30,7 @@ on `lattice-cli/` for tags and `mithrl` for asset/binary names.
 ## Mithrl-1 CLI
 
 Each GitHub Release tagged `lattice-cli/cli-v*` (published by
-`aviai/lattice-kg`'s `.github/workflows/cli_release.yml`) carries:
+`mithrl-labs/lattice-kg`'s `.github/workflows/cli_release.yml`) carries:
 
 - `manifest.json` — the version + per-platform `{url, sha256}` map
 - `manifest.json.sig` — an Ed25519 detached signature over `manifest.json`
@@ -40,7 +40,7 @@ Each GitHub Release tagged `lattice-cli/cli-v*` (published by
 `mithrl update` (`cli/src/lattice_cli/update_client.py`) verifies `manifest.json`'s
 signature against a public key embedded in the CLI before trusting anything in it —
 this repo being public is not itself a trust boundary; the signature is. See
-`cli/README_UPDATE.md` in `aviai/lattice-kg` for the full design.
+`cli/README_UPDATE.md` in `mithrl-labs/lattice-kg` for the full design.
 
 ### Installing a binary manually
 
@@ -53,20 +53,20 @@ right binary for that platform — no `gh` CLI or login required, just `curl`
 **macOS (Apple Silicon only — no Intel Mac build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
+TAG=$(curl -s https://api.github.com/repos/mithrl-labs/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/mithrl-labs/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Linux (x86_64 only — no ARM Linux build yet):**
 
 ```sh
-TAG=$(curl -s https://api.github.com/repos/aviai/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
+TAG=$(curl -s https://api.github.com/repos/mithrl-labs/public-releases/releases | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && curl -L -o mithrl "https://github.com/mithrl-labs/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-$tag = (Invoke-RestMethod "https://api.github.com/repos/aviai/public-releases/releases" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
-Invoke-WebRequest -Uri "https://github.com/aviai/public-releases/releases/download/$($tag -replace '/', '%2F')/mithrl-windows-amd64.exe" -OutFile mithrl.exe
+$tag = (Invoke-RestMethod "https://api.github.com/repos/mithrl-labs/public-releases/releases" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
+Invoke-WebRequest -Uri "https://github.com/mithrl-labs/public-releases/releases/download/$($tag -replace '/', '%2F')/mithrl-windows-amd64.exe" -OutFile mithrl.exe
 .\mithrl.exe --version
 ```
 
@@ -88,9 +88,9 @@ an opaque tag name).
 <summary>Prefer the <code>gh</code> CLI?</summary>
 
 ```sh
-TAG=$(gh release list --repo aviai/public-releases --json tagName,publishedAt \
+TAG=$(gh release list --repo mithrl-labs/public-releases --json tagName,publishedAt \
   --jq 'map(select(.tagName | startswith("lattice-cli/"))) | sort_by(.publishedAt) | reverse | .[0].tagName')
-gh release download "$TAG" --repo aviai/public-releases --pattern 'mithrl-darwin-arm64'  # or -linux-x86_64 / -windows-amd64.exe
+gh release download "$TAG" --repo mithrl-labs/public-releases --pattern 'mithrl-darwin-arm64'  # or -linux-x86_64 / -windows-amd64.exe
 mv mithrl-darwin-arm64 mithrl && chmod 755 mithrl  # adjust the source name to match whichever pattern you used above
 ```
 
@@ -104,4 +104,4 @@ refuses to run at all otherwise.
 
 This repo intentionally contains no application source — only release assets
 and this README. Each product's source lives in its own repo (the mithrl
-CLI's is `aviai/lattice-kg/cli/`).
+CLI's is `mithrl-labs/lattice-kg/cli/`).
