@@ -54,14 +54,16 @@ right binary for that platform — no `gh` CLI or login required, just `curl`
 
 ```sh
 TAG=$(curl -s "https://api.github.com/repos/aviai/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
-[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version || echo "No lattice-cli/* release found" >&2
+[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; }
+[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Linux (x86_64 only — no ARM Linux build yet):**
 
 ```sh
 TAG=$(curl -s "https://api.github.com/repos/aviai/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
-[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version || echo "No lattice-cli/* release found" >&2
+[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; }
+[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/aviai/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
 ```
 
 **Windows (PowerShell):**
