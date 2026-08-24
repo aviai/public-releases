@@ -46,48 +46,53 @@ this repo being public is not itself a trust boundary; the signature is. See
 
 Most people should just run `mithrl update` — this is for anyone who wants a
 binary directly (e.g. no existing `mithrl` install to run `update` from).
-Each command below finds the latest `lattice-cli/*` release and downloads the
-right binary for that platform — no `gh` CLI or login required, just `curl`
-(macOS/Linux, both preinstalled) or PowerShell (Windows, preinstalled).
 
-**macOS (Apple Silicon only — no Intel Mac build yet):**
+One command picks the right binary for the machine it runs on, names it
+`mithrl`, and makes it executable.
 
-```sh
-TAG=$(curl -s "https://api.github.com/repos/mithrl-labs/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
-[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; }
-[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/mithrl-labs/public-releases/releases/download/${TAG//\//%2F}/mithrl-darwin-arm64" && chmod 755 mithrl && ./mithrl --version
-```
-
-**Linux (x86_64 only — no ARM Linux build yet):**
+**macOS / Linux** (and Windows under Git Bash):
 
 ```sh
-TAG=$(curl -s "https://api.github.com/repos/mithrl-labs/public-releases/releases?per_page=100" | grep -m1 '"tag_name": "lattice-cli/' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/')
-[ -n "$TAG" ] || { echo "No lattice-cli/* release found" >&2; }
-[ -n "$TAG" ] && curl -fL -o mithrl "https://github.com/mithrl-labs/public-releases/releases/download/${TAG//\//%2F}/mithrl-linux-x86_64" && chmod 755 mithrl && ./mithrl --version
+curl -fsSL https://raw.githubusercontent.com/mithrl-labs/public-releases/main/install-mithrl.sh | sh
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-$tag = (Invoke-RestMethod "https://api.github.com/repos/mithrl-labs/public-releases/releases?per_page=100" | Where-Object { $_.tag_name -like "lattice-cli/*" } | Select-Object -First 1).tag_name
-if (-not $tag) { throw "No lattice-cli/* release found" }
-Invoke-WebRequest -Uri "https://github.com/mithrl-labs/public-releases/releases/download/$($tag -replace '/', '%2F')/mithrl-windows-amd64.exe" -OutFile mithrl.exe
-.\mithrl.exe --version
+irm https://raw.githubusercontent.com/mithrl-labs/public-releases/main/install-mithrl.ps1 | iex
 ```
 
-If `./mithrl --version` (or `.\mithrl.exe --version`) prints a version
-string, it worked — move the binary wherever you keep executables on your
-`PATH` (e.g. `sudo mv mithrl /usr/local/bin/` on macOS/Linux).
+Both drop the binary in the current directory. To put it straight on your
+`PATH` instead:
 
-All three rely on the GitHub API returning releases newest-first (its
-documented default — `mithrl update` relies on the same ordering, see
-`update_client.py`'s `_resolve_manifest_urls`) and take the first one tagged
-`lattice-cli/*`, since neither the web UI's "Latest" badge nor
-`/releases/latest` can be trusted here (see "Tag namespacing" above). They
-percent-encode that tag's `/` as `%2F` before building the download URL —
-required because GitHub 404s on a literal `/` inside a release tag path
-segment (confirmed empirically; treats it as a path separator, not part of
-an opaque tag name).
+```sh
+curl -fsSL https://raw.githubusercontent.com/mithrl-labs/public-releases/main/install-mithrl.sh | MITHRL_INSTALL_DIR=~/.local/bin sh
+```
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/mithrl-labs/public-releases/main/install-mithrl.ps1))) -InstallDir "$HOME\bin"
+```
+
+The script finds the newest release tagged `lattice-cli/*` (GitHub's own
+"Latest" marker is repo-wide — see "Tag namespacing" above), downloads the
+asset for this platform, and checks its SHA-256 against that release's
+`manifest.json` before installing anything. It refuses to install on a
+mismatch, and fails with a specific message on platforms that have no build
+yet (Intel Mac, ARM Linux, ARM Windows).
+
+That checksum catches a corrupt, truncated or wrong-asset download. It is not
+a signature check: `manifest.json` arrives over HTTPS and its `manifest.json.sig`
+is not verified here, because that needs the public key embedded in the CLI.
+`mithrl update` does verify it — see "Mithrl-1 CLI" above.
+
+Piping a script into a shell means trusting what this URL serves at the moment
+you run it. To read it first:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mithrl-labs/public-releases/main/install-mithrl.sh -o install-mithrl.sh
+less install-mithrl.sh
+sh install-mithrl.sh
+```
 
 <details>
 <summary>Prefer the <code>gh</code> CLI?</summary>
@@ -96,12 +101,12 @@ an opaque tag name).
 TAG=$(gh release list --repo mithrl-labs/public-releases --json tagName,publishedAt \
   --jq 'map(select(.tagName | startswith("lattice-cli/"))) | sort_by(.publishedAt) | reverse | .[0].tagName')
 gh release download "$TAG" --repo mithrl-labs/public-releases --pattern 'mithrl-darwin-arm64'  # or -linux-x86_64 / -windows-amd64.exe
-mv mithrl-darwin-arm64 mithrl && chmod 755 mithrl  # adjust the source name to match whichever pattern you used above
+mv mithrl-darwin-arm64 mithrl && chmod u+rwx mithrl  # adjust the source name to match whichever pattern you used above
 ```
 
 `gh` handles the tag's `/` correctly on its own — no percent-encoding needed
 here. Requires `gh auth login` first, even for this public repo; `gh`
-refuses to run at all otherwise.
+refuses to run at all otherwise. This path does no checksum check.
 
 </details>
 
