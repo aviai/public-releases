@@ -1,5 +1,7 @@
 # public-releases
 
+test
+
 Signed release artifacts, published from more than one mithrl-labs product's release
 CI — no application source, only release assets and this README. This repo is
 deliberately public and separate from any product's own (private/internal)
